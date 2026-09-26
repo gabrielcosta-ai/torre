@@ -77,3 +77,41 @@ Legenda: **OAI** = compatível com OpenAI (base URL) · **TC** = tool calling ·
 - **Cline, Roo e Kilo:** Roo Code encerrado em 15/05/2026. Cline é BYOK e só tem modelos free em promoções. Kilo tem `kilo-auto/free` (ver A.1). Fonte: 2026.
 - **Replit / Bolt / Lovable / v0:** todos com cota diária ou mensal pequena e sem API de LLM reutilizável. Bolt dá 1M tokens/mês; Lovable, 5 créditos/dia; v0, US$5/mês com 7 mensagens/dia. Fonte: 2026.
 - **Qwen Code CLI:** o OAuth grátis **acabou em 15/04/2026**. **iFlow CLI** foi encerrado em 17/04/2026. Fontes: github.com/QwenLM/qwen-code/issues/3316 e github.com/iflow-ai/iflow-cli.
+
+## (B) Ranking — 10 maiores volumes gratuitos para agentes de código
+
+Critério: volume diário **utilizável por um agente** (tool calling, contexto ≥ 32k, cadência de muitas chamadas). Estimativas em ordem de grandeza. Onde o provedor não publica teto, a posição reflete o limite por minuto e relatos da comunidade, e está marcada "n.v.".
+
+### B.1 SEM cartão
+
+| # | Provedor | Volume grátis estimado | Por que está nessa posição |
+|---|---|---|---|
+| 1 | **NVIDIA NIM** | 40 RPM, sem teto diário publicado (n.v.) | Maior RPM grátis, com modelos fortes (Qwen3-Coder 480B, Kimi, GLM-5.x). Os termos falam em prototipação, e há filas em modelos populares. |
+| 2 | **Z.ai GLM Flash** | Sem teto publicado; ≈ 1 requisição simultânea (n.v.) | Modelo US$0 contínuo e razoável para código. A concorrência de 1 obriga a serializar as chamadas. |
+| 3 | **Mistral free mode** | Histórico: ~1B tokens/mês a 1 RPS (n.v. 2026; pode ter virado US$10/mês) | Se o limite antigo ainda vale, é o maior volume em tokens. O painel da conta confirma o valor. |
+| 4 | **Groq** | ~200k tokens/dia **por modelo** (gpt-oss-120b + gpt-oss-20b + qwen3.8 ≈ 400–600k/dia) | Muito rápido, mas 8k TPM limita cada requisição a um contexto pequeno. |
+| 5 | **Google Gemini (Flash-Lite + Flash)** | ~1.000 RPD no Flash-Lite e ~20 RPD no 3.8 Flash (n.v.) | Contexto de 1M. O RPD baixo do Flash "forte" limita o uso. Os dados vão para treino. |
+| 6 | **OpenCode Zen (modelos free)** | Não publicado | Endpoint OpenAI sem cartão, com lista rotativa de modelos de código. |
+| 7 | **Kilo `kilo-auto/free`** | ~200 req/h (n.v.) | Bom volume, mas a compatibilidade OpenAI para uso externo não foi verificada. |
+| 8 | **OpenRouter `:free`** | 50 req/dia (20 RPM) | Maior variedade de modelos. Sem compra, o volume é pequeno (ver B.2 para 1.000/dia). |
+| 9 | **Cloudflare Workers AI** | 10k Neurons/dia (≈ poucas centenas de mil tokens de gpt-oss-120b) | Integração nativa com o Worker Frota (binding `env.AI`), sem latência extra. |
+| 10 | **Cohere trial** | 1.000 chamadas/mês (20/min) | Só uso não comercial. |
+
+**Créditos únicos sem cartão, para queimar em testes:** AI21 US$10/3 meses; Anthropic US$5 (SMS); Hyperbolic US$1 (telefone); Fireworks US$1 (n.v.); HF US$0,10/mês; OVH anônimo 2 RPM; SambaNova free com 20 RPD; Azure for Students US$100 (exige e-mail institucional).
+
+### B.2 COM cartão (ou compra única)
+
+| # | Provedor | Volume grátis | Observação |
+|---|---|---|---|
+| 1 | **OpenAI — data sharing** | Até 1M tokens/dia (modelos grandes) + 10M/dia (mini/nano) no tier 3+; ~250k/dia no tier 1–2 | Maior volume diário recorrente. Exige tier pago e **treina com os dados**. |
+| 2 | **Google Cloud (Vertex)** | US$300 / 90 dias | Gemini Pro no Vertex. Não cobre o AI Studio para contas novas. |
+| 3 | **Oracle Cloud** | US$300 / 30 dias | OCI GenAI com endpoint OpenAI. Os modelos variam por região. |
+| 4 | **OpenRouter após compra de US$10** | 1.000 req/dia `:free`, para sempre | Não é grátis (US$10 uma vez), mas é o melhor custo por requisição. |
+| 5 | **AWS** | Até US$200 / 6 meses | Na prática só Amazon Nova; Claude via Marketplace fica fora. |
+| 6 | **Azure** | US$200 / 30 dias | A quota de Foundry começa em 0 no Free Trial. |
+| 7 | **SambaNova Developer** | US$5 / 3 meses, até 20M tokens/dia (dado de 2025, n.v.) | — |
+| 8 | **Alibaba Model Studio** | 1M tokens **por modelo** / 90 dias | Soma vários modelos Qwen-Coder. |
+| 9 | **Cerebras trial** | US$5 / 30 dias (~14M tokens de entrada no gpt-oss-120b) | Muito rápido. |
+| 10 | **Scaleway** | 1M tokens | Bons modelos (GLM-5.2, Qwen3.5 397B, Devstral 2). |
+
+Nebius dá US$1 + US$25 pelo Builder Program; também pede cartão.
