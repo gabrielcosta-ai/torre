@@ -115,3 +115,29 @@ Critério: volume diário **utilizável por um agente** (tool calling, contexto 
 | 10 | **Scaleway** | 1M tokens | Bons modelos (GLM-5.2, Qwen3.5 397B, Devstral 2). |
 
 Nebius dá US$1 + US$25 pelo Builder Program; também pede cartão.
+
+## (C) Plano para a Frota — 6 provedores a ligar primeiro
+
+Critérios: sem cartão, API compatível com OpenAI (entra direto no Worker), tool calling, contexto ≥ 32k e **diversidade de limites**, para o roteador fazer fallback quando um provedor der 429. Os ids marcados "n.v." devem ser confirmados com `GET {base}/models` antes de fixar no roteamento.
+
+| # | Provedor | Base URL | Forte | Médio | Fraco | Teto diário (free) | Gerar a chave |
+|---|---|---|---|---|---|---|---|
+| 1 | **NVIDIA NIM** | `https://integrate.api.nvidia.com/v1` | `qwen/qwen3-coder-480b-a35b-instruct` (alternativa: `moonshotai/kimi-k3`, n.v.) | `openai/gpt-oss-120b` | `nvidia/nemotron-3-nano-30b-a3b` | 40 RPM; teto diário não publicado (trial por modelo) | https://build.nvidia.com → escolher modelo → **Get API Key** |
+| 2 | **Groq** (já em uso) | `https://api.groq.com/openai/v1` | `openai/gpt-oss-120b` | `qwen/qwen3.8-27b` (n.v.) | `openai/gpt-oss-20b` | ~1.000 RPD e 200k TPD **por modelo**; 8k TPM | https://console.groq.com/keys |
+| 3 | **Google Gemini (AI Studio)** | `https://generativelanguage.googleapis.com/v1beta/openai/` | `gemini-3.8-flash` | `gemini-3.5-flash` (free n.v.) | `gemini-3.5-flash-lite` | ~20 RPD no 3.8 Flash; ~1.000 RPD no Flash-Lite (n.v.; ver no AI Studio) | https://aistudio.google.com/apikey |
+| 4 | **OpenRouter** (chave já existe) | `https://openrouter.ai/api/v1` | `nvidia/nemotron-3-ultra:free` (n.v.) | `openrouter/free` (com tools) | `nvidia/nemotron-3.5-lightning:free` | 50 req/dia (1.000 com compra única de US$10); 20 RPM | https://openrouter.ai/settings/keys |
+| 5 | **Z.ai (GLM)** | `https://api.z.ai/api/paas/v4/` | `glm-4.7-flash` | `glm-4.7-flash` | `glm-4.5-flash` | Sem teto publicado; ~1 requisição simultânea (n.v.) | https://z.ai/manage-apikey/apikey-list (URL n.v.) |
+| 6 | **Mistral** | `https://api.mistral.ai/v1` | `mistral-medium-latest` (Medium 3.5, n.v.) | `devstral-2512` (deprecated; trocar quando sair o sucessor) | `mistral-small-latest` (n.v.) | Só no painel (Admin → API → Limits); histórico ~1 RPS | https://admin.mistral.ai/organization/api-keys |
+
+**Reservas, sem cartão:**
+- **Cloudflare Workers AI**, por binding `env.AI` no próprio Worker: `@cf/openai/gpt-oss-120b` com 10k Neurons/dia. É o fallback de último recurso, com latência mínima.
+- **OpenCode Zen:** `https://opencode.ai/zen/v1`, modelos free rotativos.
+- **Cohere trial:** 1.000 chamadas/mês, só para uso não comercial.
+
+**Se aceitar pagar uma vez:** US$10 no OpenRouter multiplica o item 4 por 20 (1.000 req/dia) e é o melhor investimento isolado.
+
+**Roteamento sugerido no proxy:**
+- `forte`: NVIDIA → Gemini 3.8 Flash → OpenRouter.
+- `médio`: Groq gpt-oss-120b → Z.ai → Mistral.
+- `fraco`: Groq gpt-oss-20b → Gemini Flash-Lite → Cloudflare.
+- Em qualquer 429, pular para o próximo provedor e respeitar o `retry-after`.
