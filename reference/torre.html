@@ -1,0 +1,1145 @@
+<title>Torre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* ===== Tokens (claro completo; os blocos escuros só redefinem tokens) ===== */
+:root {
+  --fundo: #f2f6f5;
+  --superficie: #ffffff;
+  --superficie-2: #e8efee;
+  --linha: #d2dcda;
+  --linha-forte: #b4c3c0;
+  --tinta: #121c1b;
+  --tinta-2: #394a48;
+  --apagado: #5f716e;
+  --acento: #0b6b66;
+  --acento-tinta: #ffffff;
+  --acento-suave: #d5ebe8;
+  --ruim: #b3261e;
+  --ruim-suave: #fbe3df;
+  --alerta: #975900;
+  --alerta-suave: #fbeed6;
+  --bom: #2c7338;
+  --foco: #0b6b66;
+  --sombra: 0 1px 2px rgba(18, 28, 27, .06);
+  --fonte: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --fundo: #0d1413;
+    --superficie: #141e1d;
+    --superficie-2: #1b2726;
+    --linha: #2a3937;
+    --linha-forte: #3d514e;
+    --tinta: #e2eae9;
+    --tinta-2: #bccac7;
+    --apagado: #8ea29f;
+    --acento: #47b8ad;
+    --acento-tinta: #051f1c;
+    --acento-suave: #163532;
+    --ruim: #f0766b;
+    --ruim-suave: #3a1a18;
+    --alerta: #e3a849;
+    --alerta-suave: #342814;
+    --bom: #6cc27a;
+    --foco: #6fd3c8;
+    --sombra: none;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --fundo: #0d1413;
+  --superficie: #141e1d;
+  --superficie-2: #1b2726;
+  --linha: #2a3937;
+  --linha-forte: #3d514e;
+  --tinta: #e2eae9;
+  --tinta-2: #bccac7;
+  --apagado: #8ea29f;
+  --acento: #47b8ad;
+  --acento-tinta: #051f1c;
+  --acento-suave: #163532;
+  --ruim: #f0766b;
+  --ruim-suave: #3a1a18;
+  --alerta: #e3a849;
+  --alerta-suave: #342814;
+  --bom: #6cc27a;
+  --foco: #6fd3c8;
+  --sombra: none;
+}
+
+/* ===== Base ===== */
+* { box-sizing: border-box; }
+body {
+  background: var(--fundo);
+  color: var(--tinta);
+  font-family: var(--fonte);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-text-size-adjust: 100%;
+}
+h1, h2, h3, p, ul, ol, figure { margin: 0; }
+h2, h3 { text-wrap: balance; }
+ul, ol { padding: 0; list-style: none; }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; border-radius: 4px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.n, .num, td.n, th.n { font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--mono); }
+.wrap { max-width: 1180px; margin-inline: auto; padding-inline: 16px; }
+
+/* ===== Cabeçalho fixo ===== */
+.topo {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  background: var(--fundo);
+  border-bottom: 1px solid var(--linha);
+}
+.topo-linha {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: 8px 12px; padding-block: 10px 6px;
+}
+.marca { font-size: 20px; font-weight: 600; letter-spacing: .01em; }
+.atualizado { color: var(--apagado); font-size: 13px; font-variant-numeric: tabular-nums; }
+.atualizado.velho { color: var(--alerta); }
+.topo-acoes { margin-left: auto; display: flex; gap: 8px; }
+.navega { display: flex; gap: 4px 16px; flex-wrap: wrap; padding-block: 0 8px; font-size: 13px; }
+.navega a { color: var(--tinta-2); text-decoration: none; padding-block: 2px; }
+.navega a:hover { color: var(--acento); text-decoration: underline; }
+
+/* ===== Pills ===== */
+.pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; font-weight: 500; line-height: 1;
+  padding: 4px 8px; border-radius: 999px;
+  background: var(--superficie-2); color: var(--tinta-2);
+  white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.pill-quente { background: var(--acento); color: var(--acento-tinta); }
+.pill-tipo { font-family: var(--mono); letter-spacing: .04em; background: var(--acento-suave); color: var(--tinta); }
+.pill-tipo[data-tipo="DECISAO"] { background: var(--acento); color: var(--acento-tinta); }
+.pill-ruim { background: var(--ruim-suave); color: var(--ruim); }
+.pill-status { font-family: var(--mono); }
+
+/* ===== Botões ===== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 36px; padding: 6px 12px;
+  border: 1px solid var(--linha-forte); border-radius: 6px;
+  background: var(--superficie); color: var(--tinta);
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: background-color .12s, border-color .12s;
+}
+.btn:hover:not(:disabled) { border-color: var(--acento); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-go { background: var(--acento); border-color: var(--acento); color: var(--acento-tinta); min-width: 72px; }
+.btn-go:hover:not(:disabled) { filter: brightness(1.08); }
+.btn-nao { color: var(--ruim); }
+.btn-nao:hover:not(:disabled) { border-color: var(--ruim); }
+.btn-fantasma { background: transparent; border-color: transparent; color: var(--acento); padding-inline: 6px; }
+.btn-fantasma:hover:not(:disabled) { border-color: var(--linha); }
+.btn-mini { min-height: 28px; padding: 3px 9px; font-size: 13px; font-weight: 500; }
+.btn-maestro { background: var(--superficie); }
+
+/* ===== Seções ===== */
+main.wrap { padding-block: 16px 48px; display: grid; gap: 36px; }
+section { scroll-margin-top: 110px; display: grid; gap: 12px; min-width: 0; }
+.sec-cab { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; border-bottom: 1px solid var(--linha); padding-bottom: 6px; }
+.sec-cab h2 { font-size: 17px; font-weight: 600; }
+.sec-cab .contagem { color: var(--apagado); font-size: 13px; font-variant-numeric: tabular-nums; }
+.subtitulo { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--apagado); }
+.estado { color: var(--apagado); font-size: 14px; padding: 10px 12px; border: 1px dashed var(--linha); border-radius: 6px; }
+.estado.erro { color: var(--ruim); border-color: var(--ruim); }
+.aviso-acesso {
+  background: var(--alerta-suave); color: var(--tinta);
+  border: 1px solid var(--alerta); border-radius: 6px;
+  padding: 10px 12px; font-size: 14px;
+}
+.aviso-acesso strong { color: var(--alerta); }
+
+/* ===== Pendentes ===== */
+.lista-pend { display: grid; gap: 12px; max-width: 900px; }
+.pend {
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: 8px;
+  padding: 14px; display: grid; gap: 10px; box-shadow: var(--sombra); min-width: 0;
+}
+.pend-topo { display: flex; gap: 10px; align-items: flex-start; }
+.pend-topo .pill { margin-top: 2px; flex: none; }
+.pend-titulo { font-size: 16px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.pend-meta { font-size: 13px; color: var(--apagado); display: flex; flex-wrap: wrap; gap: 2px 10px; }
+.pend-meta strong { color: var(--tinta-2); font-weight: 500; }
+.pend-destrava { font-size: 14px; color: var(--tinta-2); overflow-wrap: anywhere; }
+.rot { color: var(--apagado); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; margin-right: 4px; }
+.pend-cmds { display: grid; gap: 8px; }
+.cmd { border: 1px solid var(--linha); border-radius: 6px; background: var(--superficie-2); min-width: 0; }
+.cmd-barra { display: flex; justify-content: space-between; align-items: center; padding: 4px 6px 4px 10px; border-bottom: 1px solid var(--linha); }
+.cmd-barra span { font-size: 12px; color: var(--apagado); font-family: var(--mono); }
+.cmd pre {
+  margin: 0; padding: 10px; overflow-x: auto;
+  font-family: var(--mono); font-size: 13px; line-height: 1.5; white-space: pre; color: var(--tinta);
+}
+.pend-acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.pend-acoes.decisao { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.btn-opcao {
+  display: grid; justify-items: start; text-align: left; gap: 2px;
+  padding: 8px 12px; min-height: 44px; width: 100%;
+}
+.op-texto { font-weight: 600; }
+.op-just { font-weight: 400; font-size: 13px; color: var(--apagado); }
+.pend-acoes.decisao .btn-nao { justify-self: start; }
+.pend-nota { display: flex; gap: 8px; }
+.nota-in {
+  flex: 1; min-width: 0; min-height: 36px; padding: 6px 10px;
+  border: 1px solid var(--linha-forte); border-radius: 6px; background: var(--superficie);
+}
+.nota-in::placeholder { color: var(--apagado); }
+.nota-in:disabled { opacity: .6; }
+.pend-resp { font-size: 13px; color: var(--tinta-2); overflow-wrap: anywhere; }
+.pend-pe { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.dica { font-size: 12px; color: var(--apagado); border: 1px solid var(--linha); border-radius: 999px; padding: 2px 8px; }
+.pend-aviso { font-size: 13px; color: var(--apagado); }
+.pend-aviso.erro { color: var(--ruim); font-weight: 500; }
+.pend-aviso.ok { color: var(--bom); }
+
+.fechados { max-width: 900px; border: 1px solid var(--linha); border-radius: 8px; background: var(--superficie); }
+.fechados > summary { cursor: pointer; padding: 10px 14px; font-weight: 600; font-size: 14px; color: var(--tinta-2); }
+.fechados[open] > summary { border-bottom: 1px solid var(--linha); }
+.lista-fech { display: grid; }
+.fech { padding: 10px 14px; display: grid; gap: 4px; border-bottom: 1px solid var(--linha); }
+.fech:last-child { border-bottom: 0; }
+.fech-topo { display: flex; gap: 8px; align-items: baseline; }
+.fech-titulo { font-size: 14px; overflow-wrap: anywhere; }
+.fech-pe { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; font-size: 13px; color: var(--apagado); }
+.fech-resp { color: var(--tinta-2); overflow-wrap: anywhere; }
+.fech-mais { padding: 8px 14px; font-size: 13px; color: var(--apagado); }
+
+/* ===== Frentes ===== */
+.grade-frentes { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.frente {
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: 8px;
+  padding: 14px; display: grid; gap: 8px; align-content: start; box-shadow: var(--sombra); min-width: 0;
+}
+.frente.travado { border-color: var(--ruim); }
+.frente.risco { border-color: var(--alerta); }
+.frente-cab { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.frente-cab h3 { font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
+.frente-cab time { font-size: 12px; color: var(--apagado); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.frente-sub { font-size: 13px; color: var(--apagado); overflow-wrap: anywhere; }
+.frente-sub strong { color: var(--tinta-2); font-weight: 500; }
+.marco { font-size: 14px; overflow-wrap: anywhere; }
+.marco .seta { color: var(--apagado); padding-inline: 4px; }
+.marco .prox { color: var(--tinta-2); }
+.faixa { border-radius: 5px; padding: 6px 10px; font-size: 13px; overflow-wrap: anywhere; }
+.faixa strong { font-weight: 600; margin-right: 4px; }
+.faixa-travado { background: var(--ruim-suave); color: var(--tinta); border-left: 4px solid var(--ruim); }
+.faixa-travado strong { color: var(--ruim); }
+.faixa-risco { background: var(--alerta-suave); color: var(--tinta); border-left: 4px solid var(--alerta); }
+.faixa-risco strong { color: var(--alerta); }
+.recrutas { display: grid; gap: 2px; border-top: 1px solid var(--linha); padding-top: 8px; font-size: 13px; }
+.recrutas li { font-family: var(--mono); font-size: 12.5px; color: var(--tinta-2); overflow-wrap: anywhere; }
+.recrutas .vazio { font-family: var(--fonte); color: var(--apagado); }
+.frente-pend { font-size: 12px; color: var(--acento); font-weight: 500; }
+
+/* ===== Tokens ===== */
+.bloco { display: grid; gap: 8px; min-width: 0; }
+.grade-cotas { display: grid; gap: 10px 20px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); }
+.cota { display: grid; gap: 4px; background: var(--superficie); border: 1px solid var(--linha); border-radius: 8px; padding: 10px 12px; }
+.cota-rot { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+.cota-nome { overflow-wrap: anywhere; }
+.cota-nome strong { font-weight: 600; }
+.cota-pct { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+.cota-pct .nivel { font-weight: 500; font-size: 12px; margin-left: 4px; }
+.cota.critico .nivel { color: var(--ruim); }
+.cota.atencao .nivel { color: var(--alerta); }
+.trilho { height: 8px; border-radius: 4px; background: var(--superficie-2); overflow: hidden; }
+.enche { height: 100%; border-radius: 4px; background: var(--acento); transition: width .3s; }
+.cota.atencao .enche { background: var(--alerta); }
+.cota.critico .enche { background: var(--ruim); }
+.cota-pe { font-size: 12px; color: var(--apagado); font-variant-numeric: tabular-nums; }
+
+.rola { overflow-x: auto; border: 1px solid var(--linha); border-radius: 8px; background: var(--superficie); -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.rola table { min-width: 620px; }
+th, td { padding: 7px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--linha); }
+th { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--apagado); background: var(--superficie-2); white-space: nowrap; }
+td.n, th.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+tbody tr:last-child td { border-bottom: 0; }
+tfoot td { font-weight: 600; border-top: 1px solid var(--linha-forte); border-bottom: 0; }
+tr.alerta td { background: var(--ruim-suave); }
+tr.alerta td:first-child { box-shadow: inset 4px 0 0 var(--ruim); }
+.cel-proj { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.cel-sub { font-size: 12px; color: var(--apagado); font-family: var(--mono); }
+.grade-tabelas { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); }
+
+/* ===== Memória ===== */
+.kpis { display: flex; flex-wrap: wrap; gap: 10px; }
+.kpi { background: var(--superficie); border: 1px solid var(--linha); border-radius: 8px; padding: 10px 14px; min-width: 130px; flex: 1 1 130px; display: grid; gap: 2px; }
+.kpi-val { font-size: 30px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.kpi-rot { font-size: 12px; color: var(--apagado); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+.kpi.ruim { border-color: var(--ruim); background: var(--ruim-suave); }
+.kpi.ruim .kpi-val { color: var(--ruim); }
+.kpi-pequeno .kpi-val { font-size: 18px; padding-top: 8px; }
+.grade-mem { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+.graf { background: var(--superficie); border: 1px solid var(--linha); border-radius: 8px; padding: 12px; min-width: 0; }
+.graf-caixa { width: 100%; min-height: 60px; }
+.graf-caixa svg { display: block; }
+.graf .legenda { font-size: 12px; color: var(--apagado); margin-bottom: 6px; }
+.g-grade { stroke: var(--linha); stroke-width: 1; }
+.g-barra { fill: var(--acento); }
+.g-linha:hover .g-barra { fill: var(--tinta-2); }
+.g-rot { fill: var(--tinta-2); font-size: 12.5px; font-family: var(--fonte); }
+.g-val { fill: var(--tinta); font-size: 12.5px; font-family: var(--mono); }
+.g-eixo { fill: var(--apagado); font-size: 11px; font-family: var(--mono); }
+.g-fundo { fill: transparent; }
+.fatos { display: grid; background: var(--superficie); border: 1px solid var(--linha); border-radius: 8px; }
+.fato { padding: 8px 12px; border-bottom: 1px solid var(--linha); display: grid; gap: 2px; min-width: 0; }
+.fato:last-child { border-bottom: 0; }
+.fato-cab { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.fato-nome { font-family: var(--mono); font-size: 12.5px; color: var(--tinta); overflow-wrap: anywhere; }
+.fato-quando { font-size: 12px; color: var(--apagado); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fato-desc { font-size: 13px; color: var(--tinta-2); overflow-wrap: anywhere; }
+.vazio { color: var(--apagado); font-size: 13px; }
+
+@media (max-width: 560px) {
+  .btn { min-height: 40px; }
+  .pend-nota { flex-wrap: wrap; }
+  .pend-nota .nota-in { flex-basis: 100%; }
+  .kpi-val { font-size: 26px; }
+  section { scroll-margin-top: 130px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+</style>
+
+<header class="topo" id="topo">
+  <div class="wrap">
+    <div class="topo-linha">
+      <h1 class="marca">Torre</h1>
+      <span class="pill" id="pill-abertos">… abertos</span>
+      <span class="atualizado" id="atualizado">carregando</span>
+      <div class="topo-acoes">
+        <button type="button" class="btn btn-maestro" id="btn-maestro" hidden>Falar com o maestro</button>
+      </div>
+    </div>
+    <nav class="navega" aria-label="Seções">
+      <a href="#pendentes">Pendentes</a>
+      <a href="#frentes">Frentes</a>
+      <a href="#tokens">Tokens</a>
+      <a href="#memoria">Memória</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="aviso-acesso" id="aviso-acesso" hidden><strong>Sem acesso aos dados.</strong> Esta visualização não recebeu o banco da Torre. Abra a página pelo claude.ai com a conta dona do painel.</p>
+
+  <!-- 2. Pendentes -->
+  <section id="pendentes" aria-labelledby="t-pendentes">
+    <div class="sec-cab">
+      <h2 id="t-pendentes">Pendentes</h2>
+      <span class="contagem" id="contagem-pendentes"></span>
+    </div>
+    <p class="estado" id="estado-pendentes">carregando…</p>
+    <div class="lista-pend" id="lista-abertos"></div>
+    <details class="fechados" id="fechados" hidden>
+      <summary id="resumo-fechados">Fechados</summary>
+      <ul class="lista-fech" id="lista-fechados"></ul>
+    </details>
+  </section>
+
+  <!-- 3. Frentes -->
+  <section id="frentes" aria-labelledby="t-frentes">
+    <div class="sec-cab">
+      <h2 id="t-frentes">Frentes</h2>
+      <span class="contagem" id="contagem-frentes"></span>
+    </div>
+    <p class="estado" id="estado-frentes">carregando…</p>
+    <div class="grade-frentes" id="lista-frentes"></div>
+  </section>
+
+  <!-- 4. Tokens -->
+  <section id="tokens" aria-labelledby="t-tokens">
+    <div class="sec-cab">
+      <h2 id="t-tokens">Tokens</h2>
+      <span class="contagem" id="contagem-tokens"></span>
+    </div>
+
+    <div class="bloco">
+      <h3 class="subtitulo">Cota das contas</h3>
+      <p class="estado" id="estado-cotas">carregando…</p>
+      <div class="grade-cotas" id="lista-cotas"></div>
+    </div>
+
+    <div class="bloco">
+      <h3 class="subtitulo">Sessões por tokens de saída</h3>
+      <p class="estado" id="estado-sessoes">carregando…</p>
+      <div class="rola" id="rola-sessoes">
+        <table id="tab-sessoes">
+          <thead>
+            <tr>
+              <th scope="col">Projeto</th>
+              <th scope="col">Modelo</th>
+              <th scope="col">Papel</th>
+              <th scope="col" class="n">Tokens out</th>
+              <th scope="col" class="n">Cache read</th>
+              <th scope="col" class="n">Turnos</th>
+              <th scope="col" class="n">Último turno</th>
+            </tr>
+          </thead>
+          <tbody id="corpo-sessoes"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grade-tabelas">
+      <div class="bloco">
+        <h3 class="subtitulo">Totais por modelo</h3>
+        <div class="rola">
+          <table id="tab-modelos">
+            <thead>
+              <tr>
+                <th scope="col">Modelo</th>
+                <th scope="col" class="n">Sessões</th>
+                <th scope="col" class="n">Tokens out</th>
+                <th scope="col" class="n">Cache read</th>
+                <th scope="col" class="n">Cache create</th>
+                <th scope="col" class="n">Turnos</th>
+              </tr>
+            </thead>
+            <tbody id="corpo-modelos"></tbody>
+            <tfoot id="pe-modelos"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <div class="bloco">
+        <h3 class="subtitulo">Custo por frente</h3>
+        <p class="estado" id="estado-custo">carregando…</p>
+        <div class="rola">
+          <table id="tab-custo">
+            <thead>
+              <tr>
+                <th scope="col">Frente</th>
+                <th scope="col">Período</th>
+                <th scope="col" class="n">Tokens in</th>
+                <th scope="col" class="n">Tokens out</th>
+                <th scope="col" class="n">Cache read</th>
+                <th scope="col" class="n">US$ estim.</th>
+                <th scope="col" class="n">Atualizado</th>
+              </tr>
+            </thead>
+            <tbody id="corpo-custo"></tbody>
+            <tfoot id="pe-custo"></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Memória -->
+  <section id="memoria" aria-labelledby="t-memoria">
+    <div class="sec-cab">
+      <h2 id="t-memoria">Memória</h2>
+      <span class="contagem" id="contagem-memoria">acervo compartilhado dos agentes</span>
+    </div>
+    <p class="estado" id="estado-memoria">carregando…</p>
+    <div class="kpis">
+      <div class="kpi"><span class="kpi-rot">Fatos no acervo</span><span class="kpi-val" id="kpi-total">—</span></div>
+      <div class="kpi" id="kpi-quebrados-box"><span class="kpi-rot">Fatos quebrados</span><span class="kpi-val" id="kpi-quebrados">—</span></div>
+      <div class="kpi"><span class="kpi-rot">Projetos com fatos</span><span class="kpi-val" id="kpi-projetos">—</span></div>
+      <div class="kpi kpi-pequeno"><span class="kpi-rot">Medido</span><span class="kpi-val" id="kpi-medido">—</span></div>
+    </div>
+    <div class="grade-mem">
+      <figure class="graf">
+        <figcaption class="subtitulo">Gotchas por projeto, últimos 7 dias</figcaption>
+        <p class="legenda">Onde os agentes mais erraram e registraram a lição.</p>
+        <div class="graf-caixa" id="graf-gotchas"><p class="vazio">carregando…</p></div>
+      </figure>
+      <div class="bloco">
+        <h3 class="subtitulo">Últimos 10 fatos</h3>
+        <ol class="fatos" id="lista-fatos"><li class="fato"><span class="vazio">carregando…</span></li></ol>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+'use strict';
+
+/* ===== Utilitários ===== */
+const $ = (id) => document.getElementById(id);
+const NF = new Intl.NumberFormat('pt-BR');
+const NF1 = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
+const USD = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const SVGNS = 'http://www.w3.org/2000/svg';
+
+function str(v) { return v == null ? '' : String(v); }
+function num(v) { const n = Number(v); return Number.isFinite(n) ? n : 0; }
+function fmtN(v) { return v == null || v === '' ? '—' : NF.format(num(v)); }
+/* Tokens: em k a partir de 10.000 (12,3k; 1.234k). */
+function fmtTok(v) {
+  if (v == null || v === '') return '—';
+  const n = num(v);
+  if (Math.abs(n) >= 10000) {
+    const k = n / 1000;
+    return (Math.abs(k) >= 100 ? NF.format(Math.round(k)) : NF1.format(k)) + 'k';
+  }
+  return NF.format(n);
+}
+function fmtUsd(v) { return v == null || v === '' ? '—' : USD.format(num(v)); }
+function cmp(a, b) { a = str(a); b = str(b); return a < b ? -1 : a > b ? 1 : 0; }
+
+/* Datas: ISO local sem fuso, "2026-09-26T09:41". Tratadas como texto para não sofrer com fuso. */
+function z2(n) { return String(n).padStart(2, '0'); }
+function agoraIso() {
+  const d = new Date();
+  return `${d.getFullYear()}-${z2(d.getMonth() + 1)}-${z2(d.getDate())}T${z2(d.getHours())}:${z2(d.getMinutes())}`;
+}
+function partes(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/.exec(str(iso));
+  return m ? { a: +m[1], me: +m[2], d: +m[3], h: +(m[4] || 0), mi: +(m[5] || 0), dia: `${m[1]}-${m[2]}-${m[3]}`, hm: `${m[4] || '00'}:${m[5] || '00'}` } : null;
+}
+function fmtQuando(iso) {
+  const p = partes(iso);
+  if (!p) return iso ? str(iso) : '—';
+  return p.dia === agoraIso().slice(0, 10) ? p.hm : `${z2(p.d)}/${z2(p.me)} ${p.hm}`;
+}
+function idadeMin(iso) {
+  const p = partes(iso);
+  if (!p) return null;
+  return Math.round((Date.now() - new Date(p.a, p.me - 1, p.d, p.h, p.mi).getTime()) / 60000);
+}
+function fmtIdade(iso) {
+  const m = idadeMin(iso);
+  if (m == null) return '';
+  if (m < 1) return 'agora';
+  if (m < 60) return `há ${m} min`;
+  if (m < 48 * 60) return `há ${Math.floor(m / 60)} h`;
+  return `há ${Math.floor(m / 1440)} d`;
+}
+
+/* Cria elemento; texto sempre por nó de texto (nunca innerHTML com dado). */
+function el(tag, attrs, ...filhos) {
+  const e = document.createElement(tag);
+  if (attrs) {
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === 'class') e.className = v;
+      else if (k === 'text') e.textContent = v;
+      else if (k === 'hidden') e.hidden = !!v;
+      else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v === true ? '' : String(v));
+    }
+  }
+  for (const f of filhos) {
+    if (f == null || f === false) continue;
+    e.append(f instanceof Node ? f : document.createTextNode(String(f)));
+  }
+  return e;
+}
+function sv(tag, attrs, texto) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, String(v));
+  if (texto != null) e.textContent = String(texto);
+  return e;
+}
+
+/* ===== Estado ===== */
+const S = {
+  db: null, comments: null, podeEscrever: null, semAcesso: false,
+  pendentes: new Map(), frentes: new Map(), custo: new Map(),
+  sessoes: new Map(), cotas: new Map(), memoria: null,
+  carregou: {},
+};
+const ESTADO_IDS = {
+  pendentes: 'estado-pendentes', frentes: 'estado-frentes', cotas: 'estado-cotas',
+  sessoes: 'estado-sessoes', custo: 'estado-custo', memoria: 'estado-memoria',
+};
+function setEstado(nome, texto, erro) {
+  const e = $(ESTADO_IDS[nome]);
+  if (!e) return;
+  if (texto == null) { e.hidden = true; return; }
+  e.textContent = texto;
+  e.classList.toggle('erro', !!erro);
+  e.hidden = false;
+}
+function estaAberto(p) { return !p.status || p.status === 'aberto'; }
+
+/* ===== Cabeçalho ===== */
+function atualizarCabecalho() {
+  let n = 0;
+  for (const p of S.pendentes.values()) if (estaAberto(p)) n++;
+  const pill = $('pill-abertos');
+  if (S.carregou.pendentes) {
+    pill.textContent = n === 1 ? '1 aberto' : `${NF.format(n)} abertos`;
+    pill.classList.toggle('pill-quente', n > 0);
+  } else {
+    pill.textContent = S.semAcesso ? '— abertos' : '… abertos';
+  }
+
+  let max = '';
+  const ver = (v) => { if (typeof v === 'string' && v > max) max = v; };
+  for (const f of S.frentes.values()) ver(f.atualizado_em);
+  for (const c of S.custo.values()) ver(c.atualizado_em);
+  for (const c of S.cotas.values()) ver(c.medido_em);
+  if (S.memoria) ver(S.memoria.medido_em);
+
+  const a = $('atualizado');
+  if (max) {
+    a.textContent = 'atualizado ' + fmtQuando(max);
+    const idade = idadeMin(max);
+    a.classList.toggle('velho', idade != null && idade > 60);
+    a.title = idade != null ? fmtIdade(max) : '';
+  } else {
+    a.textContent = S.semAcesso ? 'sem acesso aos dados' : (S.db ? 'atualizado —' : 'carregando');
+    a.classList.remove('velho');
+  }
+}
+
+/* ===== Pendentes ===== */
+const itens = new Map(); // id -> refs do cartão aberto (reaproveitado entre snapshots)
+const errosGrav = new Map(); // id -> aviso de erro a reaplicar se o cartão for recriado antes do próximo render
+
+function rotuloStatus(p) {
+  const s = str(p.status);
+  if (s === 'go') return 'GO';
+  if (s === 'nao') return 'Não';
+  if (s === 'feito') return 'Feito';
+  if (s.startsWith('opcao:')) {
+    const oid = s.slice(6);
+    const o = Array.isArray(p.opcoes) ? p.opcoes.find((x) => x && str(x.id) === oid) : null;
+    return 'Opção: ' + (o && o.texto ? str(o.texto) : oid);
+  }
+  return s || 'aberto';
+}
+
+function avisar(it, texto, tipo) {
+  it.aviso.textContent = texto;
+  it.aviso.className = 'pend-aviso' + (tipo ? ' ' + tipo : '');
+  it.aviso.hidden = !texto;
+}
+
+function travar(it) {
+  const ro = S.podeEscrever === false;
+  const off = it.ocupado || ro || !S.db;
+  for (const b of it.acoes.querySelectorAll('button')) {
+    b.disabled = off;
+    b.title = ro ? 'só leitura' : '';
+  }
+  it.salvar.disabled = off;
+  it.salvar.title = ro ? 'só leitura' : '';
+  it.nota.disabled = ro || !S.db;
+  it.dica.hidden = !ro;
+}
+
+async function gravar(it, patch) {
+  if (!S.db || S.podeEscrever === false || it.ocupado) return;
+  const atual = S.pendentes.get(it.id) || {};
+  const mudou = Object.keys(patch).some((k) => k !== 'respondido_em' && atual[k] !== patch[k]);
+  if (!mudou) { avisar(it, 'Nada mudou.', ''); return; }
+  it.ocupado = true; travar(it); avisar(it, 'salvando…', '');
+  try {
+    await S.db.collection('pendentes').doc(it.id).update(patch);
+    if ('resposta' in patch) it.notaSuja = false;
+    avisar(it, 'Salvo.', 'ok');
+  } catch (e) {
+    errosGrav.set(it.id, 'não salvou, tente de novo'); avisar(itens.get(it.id) || it, 'não salvou, tente de novo', 'erro');
+  } finally {
+    it.ocupado = false; travar(it);
+  }
+}
+
+function responder(it, status) {
+  const atual = S.pendentes.get(it.id) || {};
+  const patch = { status, respondido_em: agoraIso() };
+  const nota = it.nota.value.trim();
+  if (nota && nota !== str(atual.resposta)) patch.resposta = nota; // um update por clique leva a nota junto
+  gravar(it, patch);
+}
+
+function salvarNota(it) {
+  const atual = S.pendentes.get(it.id) || {};
+  const v = it.nota.value.trim();
+  if (v === str(atual.resposta)) { avisar(it, 'Nota já está salva.', ''); return; }
+  gravar(it, { resposta: v });
+}
+
+async function abrirComentario(alvo, it) {
+  if (!S.comments) return;
+  try {
+    await S.comments.openComposer({ element: alvo }); // opened:false = compositor ocupado; ignorar, sem retry
+  } catch (e) {
+    const c = e && e.code;
+    if (['unavailable', 'not_granted', 'forbidden', 'capability_disabled', 'capability_removed'].includes(c)) {
+      S.comments = null; aplicarComentarios();
+    } else if (it) {
+      avisar(it, 'Não abriu o comentário. Tente de novo em instantes.', 'erro');
+    }
+  }
+}
+function aplicarComentarios() {
+  $('btn-maestro').hidden = !S.comments;
+  for (const it of itens.values()) it.explicar.hidden = !S.comments;
+}
+
+function copiar(btn, pre) {
+  const texto = pre.textContent;
+  const volta = () => setTimeout(() => { btn.textContent = 'Copiar'; }, 1600);
+  const selecionar = () => {
+    try {
+      const r = document.createRange(); r.selectNodeContents(pre);
+      const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    } catch (_) {}
+    btn.textContent = 'Selecionado'; volta();
+  };
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(texto).then(() => { btn.textContent = 'Copiado'; volta(); }).catch(selecionar);
+    } else selecionar();
+  } catch (_) { selecionar(); }
+}
+
+function blocoCmd(texto, i, total) {
+  const pre = el('pre', null, texto);
+  const btn = el('button', { type: 'button', class: 'btn btn-mini', text: 'Copiar' });
+  btn.addEventListener('click', () => copiar(btn, pre));
+  return el('div', { class: 'cmd' },
+    el('div', { class: 'cmd-barra' }, el('span', { text: total > 1 ? `comando ${i + 1} de ${total}` : 'comando' }), btn),
+    pre);
+}
+
+function construirAcoes(it, tipo, opcoes) {
+  const botao = (texto, classe, status) => el('button', { type: 'button', class: 'btn ' + classe, text: texto, onclick: () => responder(it, status) });
+  const lista = [];
+  const validas = opcoes.filter((o) => o && str(o.id));
+  if (tipo === 'DECISAO' && validas.length) {
+    for (const o of validas) {
+      const oid = str(o.id);
+      lista.push(el('button', { type: 'button', class: 'btn btn-opcao', onclick: () => responder(it, 'opcao:' + oid) },
+        el('span', { class: 'op-texto', text: str(o.texto) || oid }),
+        o.justificativa ? el('span', { class: 'op-just', text: str(o.justificativa) }) : null));
+    }
+    lista.push(botao('Não', 'btn-nao', 'nao'));
+    it.acoes.classList.add('decisao');
+  } else {
+    lista.push(botao('GO', 'btn-go', 'go'), botao('Feito', '', 'feito'), botao('Não', 'btn-nao', 'nao'));
+    it.acoes.classList.remove('decisao');
+  }
+  it.acoes.replaceChildren(...lista);
+}
+
+function criarItem(id) {
+  const it = { id, notaSuja: false, ocupado: false, sigCmd: null, sigAcoes: null };
+  const idNota = 'nota-' + id;
+  it.tipo = el('span', { class: 'pill pill-tipo' });
+  it.titulo = el('h3', { class: 'pend-titulo' });
+  it.meta = el('p', { class: 'pend-meta' });
+  it.destrava = el('p', { class: 'pend-destrava' });
+  it.cmds = el('div', { class: 'pend-cmds' });
+  it.acoes = el('div', { class: 'pend-acoes', role: 'group', 'aria-label': 'Responder' });
+  it.nota = el('input', { type: 'text', id: idNota, class: 'nota-in', maxlength: '500', autocomplete: 'off', placeholder: 'nota curta para quem pediu' });
+  it.nota.addEventListener('input', () => { it.notaSuja = true; });
+  it.nota.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); salvarNota(it); } });
+  it.salvar = el('button', { type: 'button', class: 'btn', id: 'salvar-' + id, text: 'Salvar nota', onclick: () => salvarNota(it) });
+  it.resp = el('p', { class: 'pend-resp', hidden: true });
+  it.explicar = el('button', { type: 'button', class: 'btn btn-fantasma', id: 'explicar-' + id, text: 'Pedir explicação', hidden: !S.comments });
+  it.dica = el('span', { class: 'dica', text: 'só leitura', hidden: true });
+  it.aviso = el('p', { class: 'pend-aviso', role: 'status', 'aria-live': 'polite', hidden: true });
+  it.root = el('article', { class: 'pend', 'data-id': id },
+    el('div', { class: 'pend-topo' }, it.tipo, it.titulo),
+    it.meta, it.destrava, it.cmds, it.acoes,
+    el('div', { class: 'pend-nota' }, el('label', { for: idNota, class: 'sr', text: 'Nota' }), it.nota, it.salvar),
+    it.resp,
+    el('div', { class: 'pend-pe' }, it.explicar, it.dica),
+    it.aviso);
+  it.explicar.addEventListener('click', () => abrirComentario(it.root, it));
+  return it;
+}
+
+function preencherItem(it, p) {
+  const tipo = str(p.tipo).toUpperCase();
+  it.tipo.textContent = tipo === 'DECISAO' ? 'DECISÃO' : (tipo || '—');
+  it.tipo.dataset.tipo = tipo;
+  it.titulo.textContent = str(p.titulo) || it.id;
+
+  const meta = [];
+  if (p.frente) meta.push(el('span', null, el('strong', { text: str(p.frente) })));
+  if (p.quem_pediu) meta.push(el('span', { text: 'pediu: ' + str(p.quem_pediu) }));
+  if (p.criado_em) meta.push(el('span', { class: 'n', text: `aberto ${fmtQuando(p.criado_em)} · ${fmtIdade(p.criado_em)}` }));
+  it.meta.replaceChildren(...meta);
+  it.meta.hidden = !meta.length;
+
+  it.destrava.replaceChildren(el('span', { class: 'rot', text: 'destrava' }), str(p.destrava));
+  it.destrava.hidden = !p.destrava;
+
+  const cmds = Array.isArray(p.comandos) ? p.comandos.filter((c) => c != null && str(c).trim()).map(str) : [];
+  const sigCmd = JSON.stringify(cmds);
+  if (sigCmd !== it.sigCmd) {
+    it.sigCmd = sigCmd;
+    it.cmds.replaceChildren(...cmds.map((c, i) => blocoCmd(c, i, cmds.length)));
+  }
+  it.cmds.hidden = !cmds.length;
+
+  const opcoes = Array.isArray(p.opcoes) ? p.opcoes : [];
+  const sigAcoes = tipo + JSON.stringify(opcoes);
+  if (sigAcoes !== it.sigAcoes) { it.sigAcoes = sigAcoes; construirAcoes(it, tipo, opcoes); }
+
+  if (!it.notaSuja && document.activeElement !== it.nota) it.nota.value = str(p.resposta);
+  it.resp.textContent = p.resposta ? 'nota salva: ' + str(p.resposta) : '';
+  it.resp.hidden = !p.resposta;
+  travar(it);
+}
+
+function itemFechado(id, p) {
+  const aviso = el('span', { class: 'pend-aviso erro', hidden: true });
+  const ro = S.podeEscrever === false;
+  const reabrir = el('button', { type: 'button', class: 'btn btn-mini', text: 'Reabrir', disabled: ro || !S.db, title: ro ? 'só leitura' : null });
+  reabrir.addEventListener('click', async () => {
+    if (!S.db) return;
+    reabrir.disabled = true;
+    try { await S.db.collection('pendentes').doc(id).update({ status: 'aberto' }); }
+    catch (_) { errosGrav.set(id, 'não salvou, tente de novo'); aviso.textContent = 'não salvou, tente de novo'; aviso.hidden = false; reabrir.disabled = false; }
+  });
+  const er = errosGrav.get(id); if (er) { errosGrav.delete(id); aviso.textContent = er; aviso.hidden = false; }
+  return el('li', { class: 'fech' },
+    el('div', { class: 'fech-topo' },
+      el('span', { class: 'pill pill-status', text: rotuloStatus(p) }),
+      el('span', { class: 'fech-titulo', text: str(p.titulo) || id })),
+    el('div', { class: 'fech-pe' },
+      p.resposta ? el('span', { class: 'fech-resp', text: 'nota: ' + str(p.resposta) }) : null,
+      el('span', { class: 'n', text: 'respondido ' + fmtQuando(p.respondido_em) }),
+      reabrir),
+    aviso);
+}
+
+const MAX_FECHADOS = 50;
+function renderPendentes() {
+  if (!S.carregou.pendentes) return;
+  const abertos = [], fechados = [];
+  for (const [id, p] of S.pendentes) (estaAberto(p) ? abertos : fechados).push([id, p]);
+  abertos.sort((a, b) => cmp(a[1].criado_em, b[1].criado_em) || cmp(a[0], b[0])); // mais antigos em cima
+  fechados.sort((a, b) => cmp(b[1].respondido_em || b[1].criado_em, a[1].respondido_em || a[1].criado_em));
+
+  const lista = $('lista-abertos');
+  const vivos = new Set(abertos.map((x) => x[0]));
+  for (const [id, it] of itens) if (!vivos.has(id)) { it.root.remove(); itens.delete(id); }
+  abertos.forEach(([id, p], i) => {
+    let it = itens.get(id);
+    if (!it) { it = criarItem(id); itens.set(id, it); }
+    preencherItem(it, p);
+    const er = errosGrav.get(id); if (er) { errosGrav.delete(id); avisar(it, er, 'erro'); }
+    const naPosicao = lista.children[i];
+    if (naPosicao !== it.root) lista.insertBefore(it.root, naPosicao || null); // só move quando a ordem mudou
+  });
+
+  setEstado('pendentes', abertos.length ? null : 'Nada esperando por você.');
+  $('contagem-pendentes').textContent = `${NF.format(abertos.length)} abertos · ${NF.format(fechados.length)} fechados`;
+
+  const det = $('fechados');
+  det.hidden = !fechados.length;
+  $('resumo-fechados').textContent = `Fechados (${NF.format(fechados.length)})`;
+  const lf = $('lista-fechados');
+  const mostra = fechados.slice(0, MAX_FECHADOS).map(([id, p]) => itemFechado(id, p));
+  if (fechados.length > MAX_FECHADOS) mostra.push(el('li', { class: 'fech-mais', text: `mostrando os ${MAX_FECHADOS} mais recentes de ${NF.format(fechados.length)}` }));
+  lf.replaceChildren(...mostra);
+}
+
+/* ===== Frentes ===== */
+function cartaoFrente(f, abertosDaFrente) {
+  const nome = str(f.nome) || f.id;
+  const recrutas = Array.isArray(f.recrutas) ? f.recrutas.filter(Boolean) : [];
+  return el('article', { class: 'frente' + (f.travado ? ' travado' : f.risco ? ' risco' : '') },
+    el('div', { class: 'frente-cab' },
+      el('h3', { text: nome }),
+      f.atualizado_em ? el('time', { datetime: str(f.atualizado_em), text: fmtQuando(f.atualizado_em) }) : null),
+    el('p', { class: 'frente-sub' },
+      el('strong', { text: str(f.operador) || 'sem operador' }), f.modelo ? ' · ' + str(f.modelo) : ''),
+    f.travado ? el('p', { class: 'faixa faixa-travado' }, el('strong', { text: 'Travado:' }), str(f.travado)) : null,
+    f.risco ? el('p', { class: 'faixa faixa-risco' }, el('strong', { text: 'Risco:' }), str(f.risco)) : null,
+    el('p', { class: 'marco' },
+      el('span', { text: str(f.marco_atual) || '—' }),
+      el('span', { class: 'seta', 'aria-label': 'próximo', text: '→' }),
+      el('span', { class: 'prox', text: str(f.proximo_marco) || '—' })),
+    abertosDaFrente ? el('p', { class: 'frente-pend', text: abertosDaFrente === 1 ? '1 pendente aberto' : `${abertosDaFrente} pendentes abertos` }) : null,
+    el('ul', { class: 'recrutas', 'aria-label': 'Recrutas' },
+      ...(recrutas.length
+        ? recrutas.map((r) => el('li', { text: [r.nome, r.modelo, r.effort].map(str).filter(Boolean).join(' · ') || '—' }))
+        : [el('li', { class: 'vazio', text: 'sem recrutas' })])));
+}
+
+function renderFrentes() {
+  if (!S.carregou.frentes) return;
+  const porFrente = new Map();
+  for (const p of S.pendentes.values()) if (estaAberto(p) && p.frente) porFrente.set(str(p.frente), (porFrente.get(str(p.frente)) || 0) + 1);
+  const peso = (f) => (f.travado ? 2 : f.risco ? 1 : 0);
+  const lista = [...S.frentes].map(([id, f]) => ({ id, ...f }))
+    .sort((a, b) => peso(b) - peso(a) || str(a.nome || a.id).localeCompare(str(b.nome || b.id), 'pt-BR'));
+  $('lista-frentes').replaceChildren(...lista.map((f) => cartaoFrente(f, porFrente.get(str(f.nome || f.id)) || 0)));
+  const trav = lista.filter((f) => f.travado).length, ris = lista.filter((f) => !f.travado && f.risco).length;
+  $('contagem-frentes').textContent = `${NF.format(lista.length)} frentes` + (trav ? ` · ${trav} travada${trav > 1 ? 's' : ''}` : '') + (ris ? ` · ${ris} em risco` : '');
+  setEstado('frentes', lista.length ? null : 'Nenhuma frente registrada.');
+}
+
+/* ===== Tokens ===== */
+const ORDEM_BALDE = { '5h': 0, semanal: 1, fable: 2, nuvem: 3 };
+function renderCotas() {
+  if (!S.carregou.cotas) return;
+  const lista = [...S.cotas].map(([id, c]) => ({ id, ...c }))
+    .sort((a, b) => str(a.conta).localeCompare(str(b.conta), 'pt-BR') || (ORDEM_BALDE[a.balde] ?? 9) - (ORDEM_BALDE[b.balde] ?? 9));
+  $('lista-cotas').replaceChildren(...lista.map((c) => {
+    const bruto = num(c.usado_pct);
+    const p = Math.max(0, Math.min(100, bruto));
+    const nivel = bruto >= 90 ? 'critico' : bruto >= 70 ? 'atencao' : 'ok';
+    const enche = el('div', { class: 'enche' });
+    enche.style.width = p + '%';
+    const rotulo = `${str(c.conta) || c.id} · ${str(c.balde) || '—'}`;
+    return el('div', { class: 'cota ' + nivel },
+      el('div', { class: 'cota-rot' },
+        el('span', { class: 'cota-nome' }, el('strong', { text: str(c.conta) || c.id }), ' · ' + (str(c.balde) || '—')),
+        el('span', { class: 'cota-pct' }, NF1.format(bruto) + '%',
+          nivel !== 'ok' ? el('span', { class: 'nivel', text: nivel === 'critico' ? 'crítico' : 'atenção' }) : null)),
+      el('div', { class: 'trilho', role: 'meter', 'aria-label': rotulo, 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(Math.round(p)) }, enche),
+      el('div', { class: 'cota-pe' }, 'renova ' + fmtQuando(c.renova_em) + ' · medido ' + fmtQuando(c.medido_em)));
+  }));
+  setEstado('cotas', lista.length ? null : 'Nenhuma medição de cota.');
+}
+
+function renderSessoes() {
+  if (!S.carregou.sessoes) return;
+  const lista = [...S.sessoes].map(([id, s]) => ({ id, ...s })).sort((a, b) => num(b.tokens_out) - num(a.tokens_out));
+  $('corpo-sessoes').replaceChildren(...lista.map((s) => {
+    const sid = str(s.sessao_id || s.id);
+    return el('tr', { class: s.alerta ? 'alerta' : null },
+      el('td', null,
+        el('div', { class: 'cel-proj' }, el('span', { text: str(s.projeto) || '—' }), s.alerta ? el('span', { class: 'pill pill-ruim', text: 'excesso' }) : null),
+        el('div', { class: 'cel-sub', title: sid, text: [str(s.conta), sid.slice(0, 8)].filter(Boolean).join(' · ') })),
+      el('td', { text: str(s.modelo) || '—' }),
+      el('td', { text: str(s.papel) || '—' }),
+      el('td', { class: 'n', text: fmtTok(s.tokens_out) }),
+      el('td', { class: 'n', text: fmtTok(s.cache_read) }),
+      el('td', { class: 'n', text: fmtN(s.turnos) }),
+      el('td', { class: 'n', text: fmtQuando(s.ultimo_turno) }));
+  }));
+  const alertas = lista.filter((s) => s.alerta).length;
+  $('contagem-tokens').textContent = `${NF.format(lista.length)} sessões` + (alertas ? ` · ${alertas} em excesso` : '');
+  setEstado('sessoes', lista.length ? null : 'Nenhuma sessão medida.');
+
+  // Totais por modelo (soma das sessões)
+  const por = new Map();
+  const tot = { sessoes: 0, tokens_out: 0, cache_read: 0, cache_create: 0, turnos: 0 };
+  for (const s of lista) {
+    const k = str(s.modelo) || '(sem modelo)';
+    const t = por.get(k) || { sessoes: 0, tokens_out: 0, cache_read: 0, cache_create: 0, turnos: 0 };
+    t.sessoes++; tot.sessoes++;
+    for (const c of ['tokens_out', 'cache_read', 'cache_create', 'turnos']) { t[c] += num(s[c]); tot[c] += num(s[c]); }
+    por.set(k, t);
+  }
+  const linha = (nome, t, Tag) => el('tr', null,
+    el(Tag, Tag === 'th' ? { scope: 'row' } : null, nome),
+    el('td', { class: 'n', text: fmtN(t.sessoes) }),
+    el('td', { class: 'n', text: fmtTok(t.tokens_out) }),
+    el('td', { class: 'n', text: fmtTok(t.cache_read) }),
+    el('td', { class: 'n', text: fmtTok(t.cache_create) }),
+    el('td', { class: 'n', text: fmtN(t.turnos) }));
+  $('corpo-modelos').replaceChildren(...[...por].sort((a, b) => b[1].tokens_out - a[1].tokens_out).map(([k, t]) => linha(k, t, 'td')));
+  $('pe-modelos').replaceChildren(...(por.size > 1 ? [linha('Total', tot, 'td')] : []));
+  if (!por.size) $('corpo-modelos').replaceChildren(el('tr', null, el('td', { colspan: '6', class: 'vazio', text: 'Sem sessões para somar.' })));
+}
+
+function renderCusto() {
+  if (!S.carregou.custo) return;
+  const lista = [...S.custo].map(([id, c]) => ({ id, ...c })).sort((a, b) => num(b.usd_estimado) - num(a.usd_estimado));
+  const tot = { tokens_in: 0, tokens_out: 0, cache_read: 0, usd: 0 };
+  $('corpo-custo').replaceChildren(...lista.map((c) => {
+    tot.tokens_in += num(c.tokens_in); tot.tokens_out += num(c.tokens_out); tot.cache_read += num(c.cache_read); tot.usd += num(c.usd_estimado);
+    return el('tr', null,
+      el('td', { text: str(c.frente) || c.id }),
+      el('td', { text: str(c.periodo) || '—' }),
+      el('td', { class: 'n', text: fmtTok(c.tokens_in) }),
+      el('td', { class: 'n', text: fmtTok(c.tokens_out) }),
+      el('td', { class: 'n', text: fmtTok(c.cache_read) }),
+      el('td', { class: 'n', text: fmtUsd(c.usd_estimado) }),
+      el('td', { class: 'n', text: fmtQuando(c.atualizado_em) }));
+  }));
+  $('pe-custo').replaceChildren(...(lista.length > 1 ? [el('tr', null,
+    el('td', { text: 'Total' }), el('td'),
+    el('td', { class: 'n', text: fmtTok(tot.tokens_in) }),
+    el('td', { class: 'n', text: fmtTok(tot.tokens_out) }),
+    el('td', { class: 'n', text: fmtTok(tot.cache_read) }),
+    el('td', { class: 'n', text: fmtUsd(tot.usd) }),
+    el('td'))] : []));
+  setEstado('custo', lista.length ? null : 'Nenhum custo registrado.');
+}
+
+/* ===== Memória ===== */
+function ticksBonitos(max) {
+  if (max <= 0) return [0, 1];
+  const bruto = max / 4;
+  const pot = Math.pow(10, Math.floor(Math.log10(bruto)));
+  const passo = Math.max(1, [1, 2, 5, 10].map((m) => m * pot).find((v) => v >= bruto));
+  const t = [];
+  for (let v = 0; v < max + passo; v += passo) { t.push(v); if (v >= max) break; }
+  return t;
+}
+
+let largGraf = 0;
+function desenharGotchas() {
+  const caixa = $('graf-gotchas');
+  const m = S.memoria;
+  if (!S.carregou.memoria) return;
+  let dados = Object.entries((m && m.gotchas_7d_por_projeto) || {})
+    .map(([k, v]) => [k, num(v)]).filter((d) => d[1] > 0)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'pt-BR'));
+  if (dados.length > 12) {
+    const resto = dados.slice(11);
+    dados = dados.slice(0, 11).concat([[`outros (${resto.length})`, resto.reduce((s, d) => s + d[1], 0)]]);
+  }
+  if (!dados.length) {
+    caixa.replaceChildren(el('p', { class: 'vazio', text: m ? 'Nenhum gotcha registrado nos últimos 7 dias.' : 'Sem medição.' }));
+    largGraf = 0;
+    return;
+  }
+  const W = Math.max(260, Math.floor(caixa.clientWidth || 520));
+  largGraf = W;
+  const linhaH = 26, topo = 4, eixoH = 20, barraH = 14;
+  const rotW = Math.min(170, Math.round(W * 0.36));
+  const x0 = rotW + 10, x1 = W - 44;
+  const ticks = ticksBonitos(Math.max(...dados.map((d) => d[1])));
+  const tmax = ticks[ticks.length - 1];
+  const sx = (v) => x0 + (x1 - x0) * (v / tmax);
+  const altura = topo + dados.length * linhaH;
+  const H = altura + eixoH;
+  const total = dados.reduce((s, d) => s + d[1], 0);
+
+  const svg = sv('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Gotchas por projeto nos últimos 7 dias, ${total} no total` });
+  for (const t of ticks) {
+    const x = sx(t);
+    svg.append(sv('line', { class: 'g-grade', x1: x, x2: x, y1: topo, y2: altura }));
+    svg.append(sv('text', { class: 'g-eixo', x, y: altura + 14, 'text-anchor': 'middle' }, NF.format(t)));
+  }
+  const maxChars = Math.max(6, Math.floor(rotW / 7.2));
+  dados.forEach(([nome, v], i) => {
+    const yMeio = topo + i * linhaH + linhaH / 2;
+    const g = sv('g', { class: 'g-linha' });
+    g.append(sv('title', null, `${nome}: ${NF.format(v)} gotcha${v === 1 ? '' : 's'}`));
+    g.append(sv('rect', { class: 'g-fundo', x: 0, y: yMeio - linhaH / 2, width: W, height: linhaH }));
+    const rot = nome.length > maxChars ? nome.slice(0, maxChars - 1) + '…' : nome;
+    g.append(sv('text', { class: 'g-rot', x: rotW, y: yMeio + 4, 'text-anchor': 'end' }, rot));
+    g.append(sv('rect', { class: 'g-barra', x: x0, y: yMeio - barraH / 2, width: Math.max(2, sx(v) - x0), height: barraH, rx: 3 }));
+    g.append(sv('text', { class: 'g-val', x: sx(v) + 6, y: yMeio + 4 }, NF.format(v)));
+    svg.append(g);
+  });
+  caixa.replaceChildren(svg);
+}
+
+function renderMemoria() {
+  if (!S.carregou.memoria) return;
+  const m = S.memoria;
+  setEstado('memoria', m ? null : 'Sem medição do acervo ainda.');
+  $('kpi-total').textContent = m ? fmtN(m.fatos_total) : '—';
+  $('kpi-quebrados').textContent = m ? fmtN(m.fatos_quebrados) : '—';
+  $('kpi-quebrados-box').classList.toggle('ruim', !!m && num(m.fatos_quebrados) > 0);
+  $('kpi-projetos').textContent = m && m.por_projeto && typeof m.por_projeto === 'object' ? fmtN(Object.keys(m.por_projeto).length) : '—';
+  $('kpi-medido').textContent = m ? fmtQuando(m.medido_em) : '—';
+  desenharGotchas();
+
+  const ult = (m && Array.isArray(m.ultimos) ? m.ultimos.filter(Boolean) : [])
+    .slice().sort((a, b) => cmp(b.modified, a.modified)).slice(0, 10);
+  $('lista-fatos').replaceChildren(...(ult.length
+    ? ult.map((f) => el('li', { class: 'fato' },
+        el('div', { class: 'fato-cab' },
+          el('span', { class: 'fato-nome', text: str(f.name) || '—' }),
+          el('span', { class: 'fato-quando', text: fmtQuando(f.modified) })),
+        f.description ? el('p', { class: 'fato-desc', text: str(f.description) }) : null))
+    : [el('li', { class: 'fato' }, el('span', { class: 'vazio', text: 'Nenhum fato recente.' }))]));
+}
+
+/* ===== Assinaturas (uma por coleção, fora do render) ===== */
+const RENDER = {
+  pendentes: () => { renderPendentes(); renderFrentes(); },
+  frentes: renderFrentes, cotas: renderCotas, sessoes: renderSessoes, custo: renderCusto, memoria: renderMemoria,
+};
+const SEM_ACESSO = ['revoked', 'not_granted', 'capability_disabled', 'capability_removed'];
+function erroLeitura(nome, e) {
+  const c = (e && e.code) || 'unavailable';
+  setEstado(nome, SEM_ACESSO.includes(c) ? 'sem acesso aos dados' : `Não consegui ler estes dados (${c}). Recarregue a página.`, true);
+  if (nome === 'sessoes') $('corpo-modelos').replaceChildren();
+}
+function assinarColecao(nome, montar) {
+  try {
+    montar(S.db.collection(nome)).onSnapshot((snap) => {
+      const m = new Map();
+      for (const d of snap.docs) { const v = d.data(); if (v && typeof v === 'object') m.set(d.id, v); }
+      S[nome] = m; S.carregou[nome] = true;
+      RENDER[nome](); atualizarCabecalho();
+    }, (e) => erroLeitura(nome, e));
+  } catch (e) { erroLeitura(nome, e); }
+}
+function assinarMemoria() {
+  try {
+    S.db.doc('memoria/atual').onSnapshot((d) => {
+      S.memoria = d && d.exists ? (d.data() || null) : null;
+      S.carregou.memoria = true;
+      renderMemoria(); atualizarCabecalho();
+    }, (e) => erroLeitura('memoria', e));
+  } catch (e) { erroLeitura('memoria', e); }
+}
+
+function semAcesso() {
+  S.semAcesso = true;
+  $('aviso-acesso').hidden = false;
+  for (const nome of Object.keys(ESTADO_IDS)) setEstado(nome, 'sem acesso aos dados', false);
+  $('graf-gotchas').replaceChildren(el('p', { class: 'vazio', text: 'sem acesso aos dados' }));
+  $('lista-fatos').replaceChildren(el('li', { class: 'fato' }, el('span', { class: 'vazio', text: 'sem acesso aos dados' })));
+  atualizarCabecalho();
+}
+
+async function usar(nome) {
+  try { return window.claude && window.claude.use ? ((await window.claude.use(nome)) || null) : null; }
+  catch (_) { return null; }
+}
+
+async function boot() {
+  $('btn-maestro').addEventListener('click', () => abrirComentario($('topo'), null));
+
+  const [db, comments, user] = await Promise.all([usar('db'), usar('comments'), usar('user')]);
+  S.comments = comments;
+  aplicarComentarios();
+
+  if (user) {
+    // can("data.write") responde exatamente "pode gravar no db compartilhado"; null = não informado, manter botões.
+    let pode = null;
+    try { pode = typeof user.can === 'function' ? await user.can('data.write') : null; } catch (_) { pode = null; }
+    if (pode === null && typeof user.canEdit === 'function' && typeof user.can !== 'function') {
+      try { pode = await user.canEdit(); } catch (_) { pode = null; }
+    }
+    S.podeEscrever = pode === false ? false : pode === true ? true : null;
+  }
+
+  if (!db) { semAcesso(); return; }
+  S.db = db;
+  atualizarCabecalho();
+  assinarColecao('pendentes', (c) => c.orderBy('criado_em', 'desc').limit(500));
+  assinarColecao('frentes', (c) => c.limit(200));
+  assinarColecao('custo', (c) => c.limit(300));
+  assinarColecao('sessoes', (c) => c.orderBy('tokens_out', 'desc').limit(300));
+  assinarColecao('cotas', (c) => c.limit(100));
+  assinarMemoria();
+
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(() => {
+      const w = Math.floor($('graf-gotchas').clientWidth);
+      if (largGraf && w && Math.max(260, w) !== largGraf) desenharGotchas();
+    }).observe($('graf-gotchas'));
+  }
+  // Idades ("há 3 h") e "atualizado" envelhecem sem novo dado.
+  setInterval(() => { renderPendentes(); atualizarCabecalho(); }, 60000);
+}
+
+setTimeout(boot, 0);
+</script>

@@ -1,0 +1,14 @@
+# Brief — pesquisa: modelos de IA gratuitos por API para a Frota (setembro de 2026)
+Contexto: temos um proxy próprio (Cloudflare Worker "Frota") com API compatível com OpenAI (`/v1/chat/completions`, `/v1/models`) que roteia para provedores externos, uma chave por provedor. Consumidores: agentes de código autônomos (OpenCode, Claude Code, Cursor CLI) com tool calling, contexto de 32k a 200k, muitas chamadas por dia. Já usamos Groq (free: 200k tokens/dia por modelo) e temos chave do OpenRouter. SÓ faixas GRATUITAS. Usuário no Brasil, pessoa física, prefere não cadastrar cartão.
+
+Pesquise (WebSearch/WebFetch, português e inglês) todas as formas atualmente válidas de usar modelos de IA de programação de graça POR API: créditos de boas-vindas, planos free com teto diário/mensal, trials sem cartão, programas de startup/open source/estudante, promoções de lançamento, modelos ":free" em roteadores, créditos de nuvem que valem para inferência.
+
+Cubra, com prioridade para o que entra no proxy por API compatível com OpenAI:
+1. Roteadores/inferência: OpenRouter (modelos :free e limites/dia), Groq, Cerebras, SambaNova, Together, Fireworks, Hugging Face Inference, NVIDIA NIM, Cloudflare Workers AI, GitHub Models, Mistral (free tier), DeepSeek, Google AI Studio/Gemini (RPD/TPM por modelo), Alibaba Model Studio/Qwen, Moonshot/Kimi, Zhipu/GLM, MiniMax, xAI, Cohere trial, AI21, Novita, DeepInfra, Chutes, Kluster, Hyperbolic, Nebius, Scaleway/OVH.
+2. APIs de fábrica: Anthropic, OpenAI, Google.
+3. Créditos de nuvem que cobrem inferência: Google Cloud (Vertex), AWS (Bedrock), Azure (Foundry), Oracle — valor, prazo, cartão.
+4. Secundário (1 linha cada, só se der API/CLI reutilizável): Cursor, Copilot, Windsurf, Codex, Gemini CLI, JetBrains AI, Amazon Q, Cline/Roo/Kilo, Replit, Bolt, Lovable, v0.
+
+Para cada item: nome; o que é grátis (tokens/dia ou mês, requests/dia, US$, modelos com id exato da API); compatível com OpenAI? (base URL); tool calling e contexto máximo; exige cartão? e-mail .edu? vale para o Brasil?; como ativar; validade; link oficial; data da fonte. "não verificado" quando não confirmar em fonte oficial ou comunidade confiável; nada de site de cupom.
+
+Entrega em `docs/pesquisa-modelos-gratis.md`, na branch `pesquisa`, gravado seção a seção com commit+push a cada seção: (A) tabela completa; (B) ranking dos 10 maiores volumes gratuitos para agentes de código, separando SEM cartão e COM cartão; (C) "Plano para a Frota": os 6 provedores a ligar primeiro no proxy, com base URL, ids de modelo para forte/médio/fraco, teto diário e página exata para gerar a chave; (D) armadilhas (limites por minuto que quebram agentes, modelos free que treinam com os dados, regiões bloqueadas). Antes de tudo: `git remote -v`; se faltar, `git remote add origin https://github.com/gabrielcosta-ai/torre.git`.
