@@ -141,3 +141,41 @@ Critérios: sem cartão, API compatível com OpenAI (entra direto no Worker), to
 - `médio`: Groq gpt-oss-120b → Z.ai → Mistral.
 - `fraco`: Groq gpt-oss-20b → Gemini Flash-Lite → Cloudflare.
 - Em qualquer 429, pular para o próximo provedor e respeitar o `retry-after`.
+
+## (D) Armadilhas
+
+### D.1 Limites por minuto e por requisição que quebram agentes
+- **Groq, 8k TPM:** um único prompt de agente com contexto de repositório (32k+) passa do limite por minuto e volta 429 imediatamente. Use o Groq só para subtarefas curtas ou para o tier "fraco". O teto de 200k TPD também acaba em poucas sessões.
+- **OpenRouter `:free`, 20 RPM e 50 req/dia:** um agente gasta 50 requisições em uma tarefa média. Em horário de pico o 429 é frequente mesmo abaixo do limite.
+- **Gemini free:** o RPD do Flash "forte" é baixo (~20, n.v.) e **conta por projeto**, não por chave; criar várias chaves no mesmo projeto não soma limite. O reset é à meia-noite do horário do Pacífico (04h ou 05h em Brasília).
+- **Z.ai GLM Flash:** cerca de 1 requisição simultânea (n.v.). Agentes que disparam tools em paralelo recebem erro, então serialize no proxy.
+- **Mistral:** o limite histórico de 1 RPS atrapalha rajadas.
+- **NVIDIA NIM:** 40 RPM é generoso, mas o limite diário por modelo é opaco. Há filas e tool calling inconsistente em alguns modelos, por exemplo a issue 55884 do Zed.
+- **SambaNova free:** 20 RPD na prática inviabiliza agentes.
+- **OVH anônimo:** 2 req/min, só serve para teste.
+- **Moonshot tier0:** o retry automático do SDK da OpenAI pode gastar o RPM inteiro depois de um único erro. No proxy, desligue o retry do SDK e faça backoff próprio.
+- **Mitigação geral no Worker:** fallback entre provedores a cada 429 ou 5xx, leitura de `retry-after` e `x-ratelimit-*`, contador diário por provedor e modelo guardado em KV ou Durable Object, e um limite de concorrência por provedor.
+
+### D.2 Modelos free que usam seus dados
+- **Google Gemini free tier:** a tabela de preços diz que os dados são usados para melhorar os produtos. Não envie código proprietário ou segredos.
+- **OpenAI data sharing:** prompts e respostas vão para treino, e essa é a condição dos tokens grátis.
+- **OpenRouter `:free`:** vários provedores registram e treinam com os dados. Se você desligar "permitir provedores que treinam" nas configurações de privacidade, muitos `:free` somem. A ZDR é opcional.
+- **Mistral:** os dados são usados para treino **por padrão**, e dá para desligar em Admin → Privacy.
+- **OpenCode Zen, modelos free, e modelos stealth (Space Bunny Alpha etc.):** coletam dados para treino ou avaliação.
+- **NVIDIA NIM:** os termos são de trial ou prototipação e não são para produção. A política de dados não foi verificada.
+- **Z.ai e Groq free:** política de treino não verificada.
+- **Regra para a Frota:** marcar no proxy quais provedores "treinam", e ter uma flag por requisição que proíbe esses provedores para repositórios privados.
+
+### D.3 Regiões, cadastro e pagamento
+- **Brasil:** nenhum dos provedores listados bloqueia o Brasil. O free tier do Gemini só é bloqueado na EEA, no Reino Unido e na Suíça.
+- **Alibaba Model Studio:** a cota grátis só vale na região Singapura. A conta internacional pede cartão Visa ou Master internacional com pré-autorização de US$1, e não aceita cartão virtual ou pré-pago.
+- **DeepSeek:** a recarga seria só por PayPal ou meios chineses (n.v.).
+- **Google Cloud no Brasil:** pede CPF, data de nascimento e cartão. Há relatos de erro na verificação. Em contas novas, o crédito não cobre o AI Studio.
+- **AWS:** os créditos não cobrem modelos de terceiros vendidos pelo Marketplace, e o Claude é um deles.
+- **Azure Free Trial:** começa com quota 0 para Foundry e Azure OpenAI.
+- **Verificação por telefone:** Anthropic e Hyperbolic exigem, com SMS de número brasileiro (aceitação n.v.).
+- **Serviços que mudaram ou acabaram em 2025–2026:** não confie em blogs antigos sobre estes.
+  - Mudaram: Cerebras free (21/07/2026) e Groq Llama free (16/08/2026).
+  - Acabaram: GitHub Models (30/07/2026), Chutes free (15/03/2026), Kluster (07/2025), Gemini CLI com conta pessoal (18/06/2026), Qwen Code OAuth (15/04/2026), iFlow (17/04/2026), Roo Code (15/05/2026) e o programa de data sharing da xAI (05/2025).
+- **Proxies não oficiais sobre Copilot, Codex ou Cursor:** violam ou arriscam violar os termos e podem levar ao banimento da conta. Não use na Frota.
+- **Cohere trial:** proibido para uso comercial ou em produção.
