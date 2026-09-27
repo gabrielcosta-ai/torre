@@ -9,7 +9,8 @@
 # Formato aceito do dados.json (cada chave é opcional):
 #   { "sessoes": [ {...} ] ou { "<sessao_id>": {...} },
 #     "cotas":   [ {...} ] ou { "<conta-balde>": {...} },
-#     "memoria": {...} ou { "atual": {...} } }
+#     "memoria": {...} ou { "atual": {...} },
+#     "frentes": [ {...} ], "pendentes": [ {...} ] }
 # Campos que a API não conhece são descartados aqui (a API recusaria o lote inteiro).
 # Requer: bash, curl, jq.
 set -euo pipefail
@@ -51,25 +52,55 @@ jq '
 ' "$DADOS" > "$TMP/memoria.json"
 
 erros=0
-enviar() { # enviar <rota> <arquivo>
-  local rota="$1" arq="$2" codigo
+ja_existiam=0
+enviar() { # enviar <rota> <arquivo> [método] [códigos aceitos] [chaves no dry-run]
+  local rota="$1" arq="$2" metodo="${3:-PUT}" aceitos="${4:-2xx}" dry_chaves="${5:-0}" codigo bytes chaves
   if [ ! -s "$arq" ] || [ "$(jq 'if type == "array" then length else 1 end' "$arq")" = "0" ]; then
+    if [ "${TORRE_DRY:-0}" = 1 ]; then
+      if [ "$dry_chaves" = 1 ]; then echo "DRY $metodo $rota 0 "
+      else echo "DRY $metodo $rota 0"; fi
+      return 0
+    fi
     echo "torre-push: $rota: nada a enviar"
     return 0
   fi
-  codigo="$(printf 'Authorization: Bearer %s\n' "$TORRE_AGENT_TOKEN" | curl -sS -o "$TMP/resp" -w '%{http_code}' \
-    --max-time 30 -X PUT -H @- -H 'Content-Type: application/json' \
-    --data-binary @"$arq" "$URL$rota")" || codigo="000"
-  if [ "$codigo" -ge 200 ] 2>/dev/null && [ "$codigo" -lt 300 ]; then
-    echo "torre-push: $rota: ok ($codigo)"
-  else
-    echo "torre-push: $rota: falhou ($codigo) $(head -c 300 "$TMP/resp" 2>/dev/null || true)" >&2
-    erros=$((erros + 1))
+  bytes="$(wc -c < "$arq" | tr -d ' ')"
+  if [ "${TORRE_DRY:-0}" = 1 ]; then
+    if [ "$dry_chaves" = 1 ]; then chaves="$(jq -r 'keys | sort | join(",")' "$arq")"; echo "DRY $metodo $rota $bytes $chaves"
+    else echo "DRY $metodo $rota $bytes"; fi
+    return 0
   fi
+  codigo="$(printf 'Authorization: Bearer %s\n' "$TORRE_AGENT_TOKEN" | curl -sS -o "$TMP/resp" -w '%{http_code}' \
+    --max-time 30 -X "$metodo" -H @- -H 'Content-Type: application/json' \
+    --data-binary @"$arq" "$URL$rota")" || codigo="000"
+  case " $aceitos " in *" $codigo "*)
+    if [ "$codigo" = 409 ]; then ja_existiam=$((ja_existiam + 1)); echo "torre-push: $rota: já existia ($codigo)"
+    else echo "torre-push: $rota: ok ($codigo)"; fi ;;
+    *) if [ "$aceitos" = 2xx ] && [ "$codigo" -ge 200 ] 2>/dev/null && [ "$codigo" -lt 300 ] 2>/dev/null; then
+      echo "torre-push: $rota: ok ($codigo)"
+    else echo "torre-push: $rota: falhou ($codigo) $(head -c 300 "$TMP/resp" 2>/dev/null || true)" >&2; erros=$((erros + 1)); fi ;;
+  esac
 }
 
 enviar /api/sessoes "$TMP/sessoes.json"
 enviar /api/cotas "$TMP/cotas.json"
 enviar /api/memoria "$TMP/memoria.json"
 
+jq -c '.frentes[]?' "$DADOS" > "$TMP/itens-frentes"
+while IFS= read -r frente; do
+  [ -n "$frente" ] || continue
+  printf '%s\n' "$frente" | jq 'with_entries(select(.key | IN("nome","operador","modelo","marco_atual","proximo_marco","travado","risco")))' > "$TMP/item.json"
+  nome="$(jq -r '.nome' "$TMP/item.json")"
+  encoded="$(jq -rjn --arg nome "$nome" '$nome|@uri')" # -n: sem ele o jq lê o stdin do while e engole as outras frentes
+  enviar "/api/frentes/$encoded" "$TMP/item.json" PUT 2xx 1
+done < "$TMP/itens-frentes"
+
+jq -c '.pendentes[]?' "$DADOS" > "$TMP/itens-pendentes"
+while IFS= read -r pendente; do
+  [ -n "$pendente" ] || continue
+  printf '%s\n' "$pendente" | jq 'with_entries(select(.key | IN("id","titulo","tipo","frente","status")))' > "$TMP/item.json"
+  enviar /api/pendentes "$TMP/item.json" POST '201 409' 1
+done < "$TMP/itens-pendentes"
+
 [ "$erros" -eq 0 ] || exit 1
+[ "${TORRE_DRY:-0}" = 1 ] || echo "torre-push: já existiam=$ja_existiam"
